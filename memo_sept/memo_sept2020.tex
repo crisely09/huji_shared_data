@@ -109,29 +109,139 @@ where ${f_i}$ are the oscillator strengths, $\epsilon_i$ are excitation energies
 
 
 
-\subsection{Average of Retinal}
-Using the multiple methods used by Nico we generated 
+\subsection{Averaging methods}
+Within the fdeta package, the ic\_averager submodule allows averaging in internal coordinates.
+Some issues can arise, and one or more methods are available to tackle them.
+\begin{itemize}
+ \item \textbf{quasilinear dihedrals}: dihedrals close to 180° appear to switch continuously between ~180° and ~-180°, resulting in an average of ~0°. Solutions
+\begin{itemize}
+ \item this can be detected via observing both the -180°-180° range and the 0°-360° range, and always average in the one with the lower standard deviation. Values averaged in the 0°-360° need to be converted again to the -180°-180°
+ \item this could be fixed averaging angular displacement instead of the angle. This would be more computationally expansive, and is not implemented yet.
+\end{itemize}
+\item \textbf{freely rotating groups}: methyls, hydroxy, and several other groups cannot be averaged directly, as one would obtain a very similar value of ~0° for all the rotating dihedrals. Detection:
+\begin{itemize}
+ \item such angles can be detected with a threshold for the standard deviation in the optimal range (either 0°-360° or -180°-180°)
+ \item this could be fixed following angular displacement instead of the angle. Continuously growing angular displacement would characterise freely rotating groups. This would be more computationally expansive, and is not implemented yet.
+ \end{itemize}
+Solutions:
+\begin{itemize}
+ \item the dihedral values of the first frame can be taken
+ \item (slightly) preferential positions can be detected via cluster recognition in the distribution
+\end{itemize}
+\item \textbf{conformer-related groups}: hindered rotation (i.e. with a strong preferential position or set thereof), or conformers (e.g. cycloalkanes) can be averaged directly, but generally lead to a higher energy structure, more similar to the transition state between the more stable preferred structured. Detection:
+\begin{itemize}
+ \item such angles can be detected with a threshold for the standard deviation in the optimal range (either 0°-360° or -180°-180°)
+ \item this could be fixed following angular displacement instead of the angle. Quasi-constant regions of angular displacement separated by jumps would characterise conformer-related groups. This would be more computationally expansive, and is not implemented yet.
+ \end{itemize}
+ Solutions:
+\begin{itemize}
+ \item the dihedral values of the first frame can be taken 
+ \item preferential positions can be detected via cluster recognition in the distribution
+\end{itemize}
+
+\end{itemize}
+
+Presently, the averaging within a recognised preferential position is done indepentently of the other variables. For instance, specific dihedral groups are averaged only in a specific set of frames, corresponding to a conformer, but angles and bond lenghts are averaged throughout the trajectory. This is an approximation and may be corrected in the future.
+
+\subsection{Averaging retinal}
+The aforementioned methods have been tested on the LYR fragment throughout the trajectory.
+The files are named [method1]-[method2]-[descriptor], where \textit{method1} is the method used for ``oscillating'' or conformer-related groups, \textit{method2} is the method for rotating groups, \textit{descriptor} is an optional additional descriptor.
+
+During the analysis of the obtained structures, an interesting feature was noticed: dihedral 49 ``oscillates'' between two conformers, but since the change in value is very small, this cannot be detected (lower standard deviation of \~20, comparable to standard angles). This is because C\-49 is in the alkyl cycle, but in $\beta$ to a double bond.
+
+Even for humans, detection of these two conformers is possible when looking at the time evolution (see Fig. \ref{dih49evo}), but not obvious when the time information is removed (see Fig \ref{dih49distrib}).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Time evolution
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{./figures/dih49_evo.png}
+\caption{Time evolution of dihedral 49.} 
+\label{fig:dih49evo}
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Time evolution
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{./figures/dih49_distrib.png}
+\caption{Distribution of dihedral 49.} 
+\label{fig:dih49distrib}
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+This suggests that 2D-correlation is a powerful tool (see Fig. \ref{dihh49dih52}), as it reveals the separation in the distribution of dihedral 49, and that detection could be obtained either via analysis of the multidimensional correlation, or via analysis of the angular displacement, which mantains time information.
+
+The retinal has been averaged both in a ``naive'' way ignoring this aspect (i.e. authomatic detection of ``oscillating'' dihedrals) and by manually requiring detection of 2 or more clusters for dihedral 49. The former method is denoted via the \textit{descriptor} ``naive''.
+
+Let us now look at the most important geometries.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Naive and not major basin
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{./figures/mb_comp.png}
+\caption{Comparison of averaging within the major basin with (red) and without (white) basin recognition for dihedral 49.} 
+\label{fig:mb_comp}
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Naive and not minor basin
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{./figures/minb_comp.png}
+\caption{Comparison of averaging within the minor basin with (red) and without (white) basin recognition for dihedral 49.} 
+\label{fig:minb_comp}
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Geometrically speking, the cluster recognition on dihedral 49 does not cause great changes, but these ``propagate'' slighlty to the atoms connected to it. (see Fig. \ref{fig:mb_comp} and Fig. \ref{fig_minb_comp}).
+
+Clearly selecting the major or minor basin corresponds to the two envelope-like configurations of the polysubsituted cyclohexene (see Fig \ref{}).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Major vs minor basin
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{./figures/mb_minb_comp.png}
+\caption{Comparison of averaging within the major(red) and minor(white) basin. Dihedral 49 is averaged in the specific basin.} 
+\label{fig:dih49dih52}
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Excitation energy table 
 \begin{table}[h]
 \footnotesize
 \centering
-\caption{Bond alternation averages in eV.}
+\caption{Excitation energies and ground state energy for different averaged geometries. The ground state energy is calculated from the most stable frame in the trajectory. mb = major basin, minb = minor basin, pf = pick first, none = straightforward averaging}
 \label{tab:ex_ret_avrg}
-\begin{tabular}{lc}
-& \textbf{$\varepsilon_\mathrm{gas}$ / eV} \\ 
-\textbf{mb-mb} & 3.141 \\ 
-\textbf{mb-pf} & 3.060 \\ 
-\textbf{none-mb} & 3.132 \\ 
-\textbf{none-pf} & 2.812 \\ 
-\textbf{pf-mb} & 2.717 \\ 
-\textbf{pf-pf} & 3.152\\ 
-\textbf{Avg. 750} &  3.044 \\ 
+\begin{tabular}{lcc}
+& \textbf{$\varepsilon_\mathrm{gas}$ / eV} & \textbf{$\Delta E_{GS}$ / Kcal/mol}  \\ 
+\textbf{mb-mb-naive} & 3.141 & 30.887\\ 
+\textbf{mb-mb} & 3.138 & 43.602\\
+\textbf{minb-mb-naive} & NA & NA \\
+\textbf{minb-mb} & 3.137 & 36.929\\
+\textbf{mb-pf} & 3.060 & 47.477\\ 
+\textbf{none-mb} & 2.810 & 360.418\\ 
+\textbf{none-pf} & 2.717 & 368.586\\ 
+\textbf{pf-mb} &  3.152 & 79.995\\ 
+\textbf{pf-pf} & 3.070 & 87.940\\ 
+\textbf{Avg. 750} &  3.044 & 23.695\\ 
 \textbf{Std. Dev. 750} &  0.126\\ 
 \end{tabular}
 \end{table}
 %%%%%%%%%%%%%%%%%%%%%%%%%%
+
+From table \ref{tab:ex_ret_avrg} we can see that:
+\begin{itemize}
+ \item straightforward averaging of the oscillating dihedrals (ciclohexene) causes a high ground-state energy (~15 Kcal/mol). The excitation energy is affected, but less (0.3-0.4 eV vs ~15 eV).
+ Also the oscillator strength is affected (~1.8 vs ~2.4 for all other geometries).
+ \item as expected, methyls are not that important
+ \item the basin-based averaging seems to lead to reasonable groun-state energies and excitation energies
+ \item cluster recognition for dihedral 49 did not cause massive changes
+\end{itemize}
 
 
 \subsection{Bond-length-alternation bins}
